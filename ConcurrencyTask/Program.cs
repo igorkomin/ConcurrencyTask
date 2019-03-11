@@ -8,7 +8,6 @@ namespace ConcurrencyTask
     class Program
     {
         private static readonly int _tasksNumber = 3;
-        private static Stopwatch _threadPoolStopwatch;
 
         static async Task Main(string[] args)
         {
@@ -18,9 +17,10 @@ namespace ConcurrencyTask
             stopwatch.Stop();
             Console.WriteLine($"Async execution time: {stopwatch.ElapsedMilliseconds} ms");
 
-            _threadPoolStopwatch = new Stopwatch();
-            _threadPoolStopwatch.Start();
+            stopwatch.Restart();
             ProcessThreadPool();
+            stopwatch.Stop();
+            Console.WriteLine($"ThreadPool execution time {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
             ProcessParallel();
@@ -36,16 +36,25 @@ namespace ConcurrencyTask
             {
                 await Task.Run(() =>
                 {
-                    Process("Async_" + i);
+                    Process();
                 });
             }
         }
 
         private static void ProcessThreadPool()
         {
-            for (int i = 0; i < _tasksNumber; i++)
+            using (CountdownEvent signaler = new CountdownEvent(_tasksNumber))
             {
-                ThreadPool.QueueUserWorkItem(Process, "ThreadPool_" + i);
+                for (int i = 0; i < _tasksNumber; i++)
+                {
+                    ThreadPool.QueueUserWorkItem(x =>
+                    {
+                        Process();
+                        signaler.Signal();
+                    });
+                }
+
+                signaler.Wait();
             }
         }
 
@@ -53,18 +62,13 @@ namespace ConcurrencyTask
         {
             Parallel.For(0, _tasksNumber, i =>
             {
-                Process("Parallel_" + i);
+                Process();
             });
         }
 
-        private static void Process(object processType)
+        private static void Process()
         {
             Thread.Sleep(1000);
-            if ((string)processType == "ThreadPool_2")
-            {
-                _threadPoolStopwatch.Stop();
-                Console.WriteLine($"ThreadPool execution time: {_threadPoolStopwatch.ElapsedMilliseconds} ms");
-            }
         }
     }
 }
