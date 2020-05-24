@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,39 +10,39 @@ namespace ConcurrencyTask
     {
         private static readonly int _tasksNumber = 3;
 
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            await ProcessAsync();
+            RunProcessTask();
             stopwatch.Stop();
-            Console.WriteLine($"Async execution time: {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Task execution time: {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            ProcessThreadPool();
+            RunProcessThreadPool();
             stopwatch.Stop();
             Console.WriteLine($"ThreadPool execution time {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            ProcessParallel();
+            RunProcessParallel();
             stopwatch.Stop();
             Console.WriteLine($"Parallel execution time: {stopwatch.ElapsedMilliseconds} ms");
 
             Console.ReadKey();
         }
 
-        private static async Task ProcessAsync()
+        private static void RunProcessTask()
         {
+            var tasks = new List<Task>();
             for (int i = 0; i < _tasksNumber; i++)
             {
-                await Task.Run(() =>
-                {
-                    Process();
-                });
+                Task task = ProcessAsync();
+                tasks.Add(task);
             }
+            Task.WaitAll(tasks.ToArray());
         }
 
-        private static void ProcessThreadPool()
+        private static void RunProcessThreadPool()
         {
             using (CountdownEvent signaler = new CountdownEvent(_tasksNumber))
             {
@@ -58,7 +59,7 @@ namespace ConcurrencyTask
             }
         }
 
-        private static void ProcessParallel()
+        private static void RunProcessParallel()
         {
             Parallel.For(0, _tasksNumber, i =>
             {
@@ -69,6 +70,11 @@ namespace ConcurrencyTask
         private static void Process()
         {
             Thread.Sleep(1000);
+        }
+
+        private static async Task ProcessAsync()
+        {
+            await Task.Delay(1000);
         }
     }
 }
