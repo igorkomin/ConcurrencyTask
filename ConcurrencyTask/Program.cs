@@ -8,7 +8,7 @@ namespace ConcurrencyTask
 {
     class Program
     {
-        private static readonly int _tasksNumber = 3;
+        private static readonly int _tasksNumber = 30;
 
         static void Main(string[] args)
         {
@@ -74,7 +74,7 @@ namespace ConcurrencyTask
 
         private static async Task ProcessAsync()
         {
-            await Task.Delay(1000);
+            await Task.Run(() => Thread.Sleep(1000));
         }
     }
 }
