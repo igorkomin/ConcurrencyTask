@@ -69,12 +69,18 @@ namespace ConcurrencyTask
 
         private static void Process()
         {
-            Thread.Sleep(1000);
+            var array = new int[20000000];
+            for (int i = 0; i < array.Length; i++)
+            {
+                var boxedValue = (object)i;
+                var unboxedValue = (int)boxedValue;
+                array[i] = unboxedValue;
+            }
         }
 
         private static async Task ProcessAsync()
         {
-            await Task.Run(() => Thread.Sleep(1000));
+            await Task.Run(() => Process());
         }
     }
 }
